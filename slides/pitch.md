@@ -6,15 +6,6 @@ transition: fade
 auto-advance: 20
 ---
 
----
-
-marp: true
-paginate: true
-transition: fade
-auto-advance: 20
-
----
-
 <!-- slide 1 -->
 
 # Who's my person?
