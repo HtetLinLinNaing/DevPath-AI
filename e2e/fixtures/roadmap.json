@@ -1,0 +1,139 @@
+{
+  "readiness": {
+    "targetRole": "Backend Engineer",
+    "seniority": "mid-level",
+    "roleFocus": "Build and operate tested Node.js services.",
+    "band": "developing",
+    "rationale": "Backend foundations exist, but delivery skills need evidence.",
+    "topActions": ["Learn Docker", "Build CI/CD", "Deploy to AWS"],
+    "applicationRecommendation": "Start applying in week 6 after the focused project."
+  },
+  "requirements": [
+    {
+      "id": "req_node",
+      "name": "Node.js",
+      "sourceEvidence": "Build Node.js backend services",
+      "importance": "required",
+      "coverage": "partial",
+      "confidence": "high",
+      "rationale": "The profile shows JavaScript but limited production evidence."
+    }
+  ],
+  "gaps": [
+    {
+      "requirementIds": ["req_node"],
+      "name": "Production delivery",
+      "priority": "high",
+      "employabilityImpact": "Needed to prove operational readiness.",
+      "prerequisites": ["JavaScript"],
+      "timing": "before-applying",
+      "confidence": "high",
+      "assumptions": ["The target team deploys containerized services."]
+    }
+  ],
+  "roadmap": [
+    {
+      "phase": 1,
+      "title": "Service foundations",
+      "objective": "Build a tested HTTP service.",
+      "sequenceReason": "Creates the base artifact.",
+      "estimatedHours": { "minimum": 8, "maximum": 12 },
+      "estimatedWeeks": { "minimum": 1, "maximum": 2 },
+      "topics": ["HTTP APIs"],
+      "outOfScope": ["Distributed systems"],
+      "handsOnActivity": "Implement an API.",
+      "deliverable": "Tested repository.",
+      "acceptanceCriteria": ["Tests pass."],
+      "interviewChecks": ["Explain error handling."],
+      "requirementIds": ["req_node"]
+    },
+    {
+      "phase": 2,
+      "title": "Container delivery",
+      "objective": "Package the service.",
+      "sequenceReason": "Makes execution reproducible.",
+      "estimatedHours": { "minimum": 8, "maximum": 12 },
+      "estimatedWeeks": { "minimum": 1, "maximum": 2 },
+      "topics": ["Docker"],
+      "outOfScope": ["Kubernetes"],
+      "handsOnActivity": "Create a container image.",
+      "deliverable": "Containerized service.",
+      "acceptanceCriteria": ["Starts with one command."],
+      "interviewChecks": ["Explain image layering."],
+      "requirementIds": ["req_node"]
+    },
+    {
+      "phase": 3,
+      "title": "Automated delivery",
+      "objective": "Add continuous delivery.",
+      "sequenceReason": "Automates verified releases.",
+      "estimatedHours": { "minimum": 10, "maximum": 14 },
+      "estimatedWeeks": { "minimum": 1, "maximum": 2 },
+      "topics": ["CI/CD"],
+      "outOfScope": ["Multi-region delivery"],
+      "handsOnActivity": "Build a pipeline.",
+      "deliverable": "Passing pipeline.",
+      "acceptanceCriteria": ["Deployments are automated."],
+      "interviewChecks": ["Explain rollback."],
+      "requirementIds": ["req_node"]
+    },
+    {
+      "phase": 4,
+      "title": "Operational proof",
+      "objective": "Demonstrate service operations.",
+      "sequenceReason": "Completes portfolio evidence.",
+      "estimatedHours": { "minimum": 10, "maximum": 16 },
+      "estimatedWeeks": { "minimum": 1, "maximum": 2 },
+      "topics": ["Observability"],
+      "outOfScope": ["Custom telemetry platform"],
+      "handsOnActivity": "Add health and logs.",
+      "deliverable": "Operations runbook.",
+      "acceptanceCriteria": ["Recovery is documented."],
+      "interviewChecks": ["Explain incident response."],
+      "requirementIds": ["req_node"]
+    }
+  ],
+  "projects": [
+    {
+      "title": "Containerized API",
+      "problemStatement": "Ship a reproducible backend API.",
+      "requirementIds": ["req_node"],
+      "technologies": [{ "name": "Node.js", "reason": "Matches the target role." }],
+      "coreFeatures": ["REST endpoints"],
+      "nonGoals": ["Kubernetes"],
+      "demonstrationMethod": "Public repository and demo.",
+      "acceptanceCriteria": ["Tests pass in CI."],
+      "portfolioEvidence": ["Source code"]
+    },
+    {
+      "title": "Cloud Delivery Capstone",
+      "problemStatement": "Deploy and operate the service.",
+      "requirementIds": ["req_node"],
+      "technologies": [{ "name": "AWS", "reason": "Matches the target platform." }],
+      "coreFeatures": ["Automated deployment"],
+      "nonGoals": ["Multi-region failover"],
+      "demonstrationMethod": "Live service walkthrough.",
+      "acceptanceCriteria": ["Deployment is automated."],
+      "portfolioEvidence": ["Runbook"]
+    }
+  ],
+  "timeline": {
+    "weeklyHoursAssumption": "6-10",
+    "estimatedWeeks": { "minimum": 8, "maximum": 10 },
+    "applicationStartWeek": 6,
+    "targetDateAssessment": "achievable",
+    "targetDateExplanation": "The schedule leaves enough time for priority work.",
+    "weeks": [
+      { "week": 1, "focus": "Service foundations", "deliverables": ["API"], "phaseNumbers": [1] },
+      { "week": 2, "focus": "Testing", "deliverables": ["Test report"], "phaseNumbers": [1] },
+      { "week": 3, "focus": "Containers", "deliverables": ["Image"], "phaseNumbers": [2] },
+      { "week": 4, "focus": "Pipeline", "deliverables": ["CI workflow"], "phaseNumbers": [3] },
+      { "week": 5, "focus": "Deployment", "deliverables": ["Live service"], "phaseNumbers": [3] },
+      { "week": 6, "focus": "Applications", "deliverables": ["Application package"], "phaseNumbers": [4] }
+    ]
+  },
+  "certifications": [],
+  "finalAdvice": ["Apply with evidence.", "Discuss tradeoffs.", "Keep scope focused."],
+  "schemaVersion": "1.0",
+  "generatedAt": "2026-07-22T12:00:00.000Z"
+}

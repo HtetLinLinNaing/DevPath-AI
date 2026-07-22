@@ -32,7 +32,7 @@
 .requirementTable thead th { background: var(--surface); font-size: .7rem; text-transform: uppercase; }
 .stack { display: grid; gap: 14px; }
 .block { border: 1px solid var(--line); border-radius: 6px; background: var(--surface); padding: 20px; }
-.blockHeader { display: flex; justify-content: space-between; gap: 18px; align-items: start; }
+.blockHeader { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; }
 .blockHeader p { margin: 5px 0 0; }
 .phaseNumber { flex: none; color: var(--blue); font: 750 1rem/1 var(--mono); }
 .effort { flex: none; color: var(--muted); font-size: .72rem; }
@@ -53,4 +53,4 @@
 .weeks small { color: var(--muted); }
 .advice { display: grid; gap: 8px; }
 @media (max-width: 760px) { .hero { grid-template-columns: 1fr; } .hero h1 { font-size: 2.25rem; } .actions, .projectGrid, .timelineSummary { grid-template-columns: 1fr; } .timelineSummary div { border-right: 0; border-bottom: 1px solid var(--line); } .detailGrid, .definition { grid-template-columns: 1fr; } .blockHeader { flex-wrap: wrap; } }
-@media print { .actionRow, .sectionNav, :global(.productHeader) { display: none !important; } .results { padding: 0; } .hero { padding-top: 0; } .band { break-before: auto; } .block { break-inside: avoid; background: #fff; } .tableScroll { overflow: visible; } .requirementTable { min-width: 0; } }
+@media print { .actionRow, .sectionNav { display: none !important; } .results { padding: 0; } .hero { padding-top: 0; } .band { break-before: auto; } .block { break-inside: avoid; background: #fff; } .tableScroll { overflow: visible; } .requirementTable { min-width: 0; } }

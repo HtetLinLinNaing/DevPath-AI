@@ -9,5 +9,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .brand span { color: var(--blue); }
 .headerMeta { color: var(--muted); font-size: .76rem; }
 .pageShell { width: min(1240px, calc(100% - 40px)); margin: 0 auto; }
+.errorBoundary { width: min(560px, calc(100% - 40px)); margin: 18vh auto 0; border-top: 3px solid var(--blue); padding-top: 24px; }
+.errorBoundary > span { color: var(--blue); font-size: .76rem; font-weight: 800; }
+.errorBoundary h1 { margin: 10px 0; font-size: 2rem; }
+.errorBoundary p { color: var(--muted); }
+.errorBoundary button { display: inline-flex; min-height: 42px; align-items: center; gap: 7px; border: 0; border-radius: 5px; background: var(--blue); color: #fff; padding: 0 14px; cursor: pointer; font: 650 .82rem/1 var(--sans); }
 @media (max-width: 480px) { .pageShell { width: min(100% - 24px, 1240px); } .productHeader { padding-inline: 12px; } }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { scroll-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; } }
+@media print { .productHeader { display: none !important; } }

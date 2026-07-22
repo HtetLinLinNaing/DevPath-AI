@@ -4,6 +4,9 @@ const compat = new FlatCompat({
   baseDirectory: import.meta.dirname,
 });
 
-export default compat.config({
-  extends: ["next/core-web-vitals"],
-});
+const config = [
+  { ignores: [".next/**", "coverage/**", "playwright-report/**", "test-results/**"] },
+  ...compat.config({ extends: ["next/core-web-vitals"] }),
+];
+
+export default config;
