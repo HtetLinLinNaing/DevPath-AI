@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import { useEffect, useReducer, useRef, useState } from "react";
 
 import type { ApiError } from "@/lib/contracts/api-error";
@@ -9,6 +9,7 @@ import { GeneratorForm } from "@/features/generator/GeneratorForm";
 import { createInitialRequest, generatorReducer } from "@/features/generator/generator-machine";
 import { requestRoadmap } from "@/features/generator/roadmap-api";
 import { loadSession, saveSession } from "@/features/generator/session-store";
+import { RoadmapResults } from "@/features/results/RoadmapResults";
 import styles from "./generator.module.css";
 
 function normalizeError(error: unknown): ApiError {
@@ -52,14 +53,7 @@ export function GeneratorExperience() {
   };
 
   if (state.status === "success") {
-    return (
-      <section className={styles.successPreview} aria-labelledby="roadmap-ready">
-        <span className={styles.eyebrow}>Roadmap generated</span>
-        <h1 id="roadmap-ready">{state.result.readiness.targetRole}</h1>
-        <p>{state.result.readiness.rationale}</p>
-        <button className={styles.secondaryButton} type="button" onClick={() => dispatch({ type: "EDIT" })}><ArrowLeft size={17} /> Edit inputs</button>
-      </section>
-    );
+    return <RoadmapResults result={state.result} onEdit={() => dispatch({ type: "EDIT" })} onRegenerate={() => void submit(state.input as RoadmapRequest)} onDownload={() => undefined} onPrint={() => undefined} onClear={() => dispatch({ type: "RESET" })} />;
   }
 
   return (
