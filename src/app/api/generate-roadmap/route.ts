@@ -4,6 +4,7 @@ import { AppError } from "@/lib/http/app-error";
 import { getClientIdentity } from "@/lib/http/client-identity";
 import { checkRateLimit } from "@/lib/http/rate-limit";
 import { toErrorResponse } from "@/lib/http/route-response";
+import { logTelemetry } from "@/lib/telemetry/logger";
 
 const MAX_BODY_BYTES = 51_200;
 
@@ -50,6 +51,7 @@ async function parseRequest(request: Request) {
 
 export async function POST(request: Request): Promise<Response> {
   const requestId = crypto.randomUUID();
+  const startedAt = Date.now();
   try {
     validateOrigin(request);
 
@@ -69,12 +71,32 @@ export async function POST(request: Request): Promise<Response> {
       requestId,
       signal: AbortSignal.timeout(30_000),
     });
+    logTelemetry({
+      name: "generation_succeeded",
+      metadata: {
+        timestamp: new Date().toISOString(),
+        requestId,
+        schemaVersion: result.roadmap.schemaVersion,
+        ...result.telemetry,
+      },
+    });
     return Response.json(result.roadmap, {
       status: 200,
       headers: responseHeaders(requestId),
     });
   } catch (error) {
     const mapped = toErrorResponse(error, requestId);
+    logTelemetry({
+      name: "generation_failed",
+      metadata: {
+        timestamp: new Date().toISOString(),
+        requestId,
+        errorCode: mapped.body.error.code,
+        durationMs: Math.max(0, Date.now() - startedAt),
+        model: process.env.OPENAI_MODEL ?? "gpt-5.6",
+        retryCount: 0,
+      },
+    });
     const headers = new Headers(responseHeaders(requestId));
     if (mapped.retryAfterSeconds !== undefined) {
       headers.set("Retry-After", String(mapped.retryAfterSeconds));

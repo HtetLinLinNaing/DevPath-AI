@@ -11,6 +11,7 @@ import { requestRoadmap } from "@/features/generator/roadmap-api";
 import { clearSession, loadSession, saveSession } from "@/features/generator/session-store";
 import { RoadmapResults } from "@/features/results/RoadmapResults";
 import { roadmapToMarkdown } from "@/lib/roadmap/to-markdown";
+import { sendClientEvent } from "@/lib/telemetry/events";
 import styles from "./generator.module.css";
 
 function normalizeError(error: unknown): ApiError {
@@ -35,6 +36,7 @@ export function GeneratorExperience() {
   const controller = useRef<AbortController | null>(null);
 
   useEffect(() => {
+    sendClientEvent("generator_viewed");
     const restored = loadSession();
     if (restored) dispatch({ type: "RESTORE", ...restored });
   }, []);
@@ -47,19 +49,24 @@ export function GeneratorExperience() {
 
   const submit = async (input: RoadmapRequest) => {
     const requestId = crypto.randomUUID();
+    const startedAt = Date.now();
     controller.current?.abort();
     controller.current = new AbortController();
     dispatch({ type: "UPDATE", input });
-    dispatch({ type: "SUBMIT", requestId, startedAt: Date.now() });
+    dispatch({ type: "SUBMIT", requestId, startedAt });
+    sendClientEvent("generation_started", { requestId });
     try {
       const result = await requestRoadmap(input, controller.current.signal);
       saveSession(input, result);
       dispatch({ type: "SUCCEED", requestId, result });
+      sendClientEvent("generation_succeeded", { requestId, durationMs: Math.max(0, Date.now() - startedAt), schemaVersion: result.schemaVersion });
     } catch (error) {
       if (controller.current.signal.aborted) {
         dispatch({ type: "CANCEL" });
       } else {
-        dispatch({ type: "FAIL", requestId, error: normalizeError(error) });
+        const normalized = normalizeError(error);
+        dispatch({ type: "FAIL", requestId, error: normalized });
+        sendClientEvent("generation_failed", { requestId, durationMs: Math.max(0, Date.now() - startedAt), errorCode: normalized.code });
       }
     }
   };
@@ -70,9 +77,10 @@ export function GeneratorExperience() {
       controller.current?.abort();
       clearSession();
       dispatch({ type: "RESET" });
+      sendClientEvent("local_data_cleared");
       window.setTimeout(() => document.getElementById("job-description")?.focus(), 0);
     };
-    return <RoadmapResults result={state.result} onEdit={() => dispatch({ type: "EDIT" })} onRegenerate={() => void submit(state.input as RoadmapRequest)} onDownload={() => downloadMarkdown(roadmapToMarkdown(state.result))} onPrint={() => window.print()} onClear={clear} />;
+    return <RoadmapResults result={state.result} onEdit={() => dispatch({ type: "EDIT" })} onRegenerate={() => void submit(state.input as RoadmapRequest)} onDownload={() => { downloadMarkdown(roadmapToMarkdown(state.result)); sendClientEvent("roadmap_exported", { exportFormat: "markdown", schemaVersion: state.result.schemaVersion }); }} onPrint={() => { window.print(); sendClientEvent("roadmap_exported", { exportFormat: "pdf", schemaVersion: state.result.schemaVersion }); }} onClear={clear} onSectionViewed={(sectionId) => sendClientEvent("roadmap_section_viewed", { sectionId })} />;
   }
 
   return (

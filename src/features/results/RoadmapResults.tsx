@@ -14,11 +14,12 @@ type Props = {
   onDownload: () => void;
   onPrint: () => void;
   onClear: () => void;
+  onSectionViewed?: (sectionId: string) => void;
 };
 
 const titleCase = (value: string) => value.replaceAll("-", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 
-export function RoadmapResults({ result, onEdit, onRegenerate, onDownload, onPrint, onClear }: Props) {
+export function RoadmapResults({ result, onEdit, onRegenerate, onDownload, onPrint, onClear, onSectionViewed }: Props) {
   const requirementNames = new Map(result.requirements.map(({ id, name }) => [id, name]));
   const sections = ["summary", "requirements", "gaps", "roadmap", "projects", "timeline", ...(result.certifications.length ? ["certifications"] : []), "advice"];
   return (
@@ -30,7 +31,7 @@ export function RoadmapResults({ result, onEdit, onRegenerate, onDownload, onPri
       <div className={styles.actionRow} aria-label="Roadmap actions">
         <button type="button" onClick={onEdit}><ArrowLeft size={16} /> Edit inputs</button><button type="button" onClick={onRegenerate}><RefreshCw size={16} /> Generate again</button><button type="button" onClick={onDownload}><Download size={16} /> Download Markdown</button><button type="button" onClick={onPrint}><Printer size={16} /> Print / Save PDF</button><button type="button" onClick={onClear}><Trash2 size={16} /> Clear my data</button>
       </div>
-      <nav className={styles.sectionNav} aria-label="Roadmap sections">{sections.map((section) => <a key={section} href={`#${section}`}>{titleCase(section)}</a>)}</nav>
+      <nav className={styles.sectionNav} aria-label="Roadmap sections">{sections.map((section) => <a key={section} href={`#${section}`} onClick={() => onSectionViewed?.(section)}>{titleCase(section)}</a>)}</nav>
 
       <section className={styles.band} aria-labelledby="summary-heading"><h2 id="summary-heading">Readiness summary</h2><p>{result.readiness.rationale}</p><ol className={styles.actions}>{result.readiness.topActions.map((action) => <li key={action}>{action}</li>)}</ol><div className={styles.callout}><strong>When to apply</strong><p>{result.readiness.applicationRecommendation}</p></div></section>
       <section className={styles.band} id="requirements" aria-labelledby="requirements-heading"><h2 id="requirements-heading">Requirement coverage</h2><RequirementTable requirements={result.requirements} /></section>

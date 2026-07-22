@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { generateRoadmap } from "@/lib/ai/generate-roadmap";
 import { RoadmapResponseSchema } from "@/lib/contracts/roadmap";
@@ -29,6 +29,7 @@ function request(body: string, options: { ip?: string; origin?: string; contentL
 describe("POST /api/generate-roadmap", () => {
   beforeEach(() => {
     vi.stubEnv("APP_ORIGIN", "http://localhost:3000");
+    vi.spyOn(console, "info").mockImplementation(() => undefined);
     mockedGenerate.mockReset().mockResolvedValue({
       roadmap,
       telemetry: {
@@ -42,12 +43,28 @@ describe("POST /api/generate-roadmap", () => {
     });
   });
 
+  afterEach(() => vi.restoreAllMocks());
+
   it("returns a validated roadmap with no-store and request ID headers", async () => {
     const response = await POST(request(JSON.stringify(validRequest), { ip: "203.0.113.10" }));
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toContain("no-store");
     expect(response.headers.get("x-request-id")).toBeTruthy();
     expect(await response.json()).toEqual(roadmap);
+    const log = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0] as string);
+    expect(log).toMatchObject({
+      name: "generation_succeeded",
+      metadata: {
+        model: "gpt-5.6",
+        durationMs: 10,
+        inputTokens: 1,
+        outputTokens: 1,
+        reasoningTokens: 0,
+        retryCount: 0,
+        schemaVersion: "1.0",
+      },
+    });
+    expect(JSON.stringify(log)).not.toContain(validRequest.jobDescription);
   });
 
   it("rejects malformed JSON", async () => {
@@ -93,6 +110,10 @@ describe("POST /api/generate-roadmap", () => {
       new AppError("GENERATION_TIMEOUT", "Roadmap generation timed out. Please try again.", true, 504),
     );
     expect((await POST(request(JSON.stringify(validRequest), { ip: "203.0.113.16" }))).status).toBe(504);
+    expect(JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0] as string)).toMatchObject({
+      name: "generation_failed",
+      metadata: { errorCode: "GENERATION_TIMEOUT" },
+    });
 
     mockedGenerate.mockRejectedValueOnce(new Error("provider secret"));
     const response = await POST(request(JSON.stringify(validRequest), { ip: "203.0.113.17" }));
