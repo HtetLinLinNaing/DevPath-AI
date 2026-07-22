@@ -5,5 +5,7 @@ node_modules/
 coverage/
 playwright-report/
 test-results/
+*.tsbuildinfo
+npm-*.log
 .env*
 !.env.example
