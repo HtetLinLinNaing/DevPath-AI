@@ -1,0 +1,50 @@
+.intro { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(280px, .7fr); gap: 48px; align-items: end; padding: 54px 0 34px; border-bottom: 1px solid var(--line); }
+.intro h1 { margin: 8px 0 0; max-width: 780px; font-size: 3.5rem; line-height: 1.02; font-weight: 720; }
+.intro p { margin: 0 0 4px; color: var(--muted); line-height: 1.65; }
+.eyebrow { color: var(--blue); font-size: .76rem; font-weight: 750; text-transform: uppercase; letter-spacing: .08em; }
+.form { padding: 30px 0 64px; }
+.formGrid { display: grid; grid-template-columns: minmax(0, 58fr) minmax(360px, 42fr); gap: 20px; align-items: start; }
+.jobPanel, .profilePanel { border: 1px solid var(--line); border-radius: 6px; background: var(--surface); padding: 22px; }
+.sectionHeading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.sectionHeading > div { display: flex; gap: 10px; align-items: center; }
+.sectionHeading h2 { margin: 0; font-size: 1rem; }
+.step { color: var(--muted); font: 700 .72rem/1 var(--mono); }
+.required { color: var(--muted); font-size: .72rem; text-transform: uppercase; }
+.field { display: grid; gap: 7px; margin-bottom: 16px; font-size: .82rem; font-weight: 650; }
+.field input, .field select, .field textarea, .skillRow input, .skillRow select { width: 100%; min-width: 0; border: 1px solid var(--line-strong); border-radius: 5px; background: #fff; color: var(--text); font: inherit; font-weight: 450; padding: 10px 11px; outline: none; }
+.field textarea { resize: vertical; line-height: 1.55; }
+.field input:focus, .field select:focus, .field textarea:focus, .skillRow input:focus, .skillRow select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--focus); }
+.field [aria-invalid="true"] { border-color: var(--red); }
+.fieldMeta { display: flex; min-height: 18px; justify-content: space-between; color: var(--muted); font: 500 .72rem/1.4 var(--sans); }
+.error { color: var(--red); font-size: .74rem; font-weight: 550; }
+.formAlert, .requestError { margin-bottom: 14px; border-left: 3px solid var(--red); background: var(--red-soft); padding: 12px 14px; color: var(--red); }
+.twoColumns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.skillsHeader { display: flex; justify-content: space-between; align-items: center; margin: 2px 0 8px; font-size: .82rem; font-weight: 650; }
+.skillList { display: grid; gap: 8px; margin-bottom: 14px; }
+.skillRow { display: grid; grid-template-columns: minmax(0, 1fr) 130px 36px; gap: 8px; align-items: start; }
+.rowError { grid-column: 1 / -1; color: var(--red); font-size: .74rem; }
+.iconButton, .textButton, .primaryButton, .secondaryButton { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 0; cursor: pointer; font: 650 .82rem/1 var(--sans); }
+.iconButton { width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 5px; background: #fff; color: var(--muted); }
+.textButton { background: transparent; color: var(--blue); padding: 5px; }
+.primaryButton { min-height: 44px; padding: 0 18px; border-radius: 5px; background: var(--blue); color: #fff; }
+.secondaryButton { min-height: 42px; padding: 0 14px; border: 1px solid var(--line-strong); border-radius: 5px; background: #fff; color: var(--text); }
+.primaryButton:disabled, .textButton:disabled, .iconButton:disabled { cursor: not-allowed; opacity: .55; }
+.actionBar { display: flex; justify-content: space-between; gap: 24px; align-items: center; margin-top: 18px; padding: 18px 20px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.consent { display: grid; grid-template-columns: 18px 1fr; gap: 4px 8px; max-width: 680px; color: var(--muted); font-size: .78rem; }
+.consent input { margin: 1px 0 0; }
+.consent .error { grid-column: 2; }
+.actions { display: flex; gap: 8px; flex: none; }
+.loading { display: flex; gap: 12px; align-items: center; margin-top: 18px; padding: 13px 15px; border: 1px solid var(--blue-line); background: var(--blue-soft); }
+.loading span:last-child { display: grid; gap: 3px; }
+.loading small { color: var(--muted); }
+.spinner { width: 18px; height: 18px; border: 2px solid var(--blue-line); border-top-color: var(--blue); border-radius: 50%; animation: spin .8s linear infinite; }
+.requestError { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; }
+.requestError p { margin: 3px 0 0; color: var(--text); }
+.successPreview { max-width: 760px; padding: 80px 0; }
+.successPreview h1 { margin: 10px 0; font-size: 2.5rem; }
+.successPreview p { color: var(--muted); line-height: 1.6; }
+.liveRegion, .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (max-width: 960px) { .intro { grid-template-columns: 1fr; gap: 18px; } .formGrid { grid-template-columns: 1fr; } }
+@media (max-width: 620px) { .intro { padding-top: 34px; } .intro h1 { font-size: 2.1rem; } .jobPanel, .profilePanel { padding: 16px; } .twoColumns { grid-template-columns: 1fr; } .skillRow { grid-template-columns: minmax(0, 1fr) 110px 36px; } .actionBar { align-items: stretch; flex-direction: column; padding-inline: 0; } .actions { width: 100%; } .actions button { flex: 1; } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
