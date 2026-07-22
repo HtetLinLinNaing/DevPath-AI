@@ -8,13 +8,25 @@ import type { RoadmapRequest } from "@/lib/contracts/roadmap";
 import { GeneratorForm } from "@/features/generator/GeneratorForm";
 import { createInitialRequest, generatorReducer } from "@/features/generator/generator-machine";
 import { requestRoadmap } from "@/features/generator/roadmap-api";
-import { loadSession, saveSession } from "@/features/generator/session-store";
+import { clearSession, loadSession, saveSession } from "@/features/generator/session-store";
 import { RoadmapResults } from "@/features/results/RoadmapResults";
+import { roadmapToMarkdown } from "@/lib/roadmap/to-markdown";
 import styles from "./generator.module.css";
 
 function normalizeError(error: unknown): ApiError {
   if (typeof error === "object" && error !== null && "code" in error && "message" in error) return error as ApiError;
   return { code: "INTERNAL_ERROR", message: "Something went wrong while generating your roadmap.", retryable: true, requestId: "client" };
+}
+
+function downloadMarkdown(markdown: string) {
+  const url = URL.createObjectURL(new Blob([markdown], { type: "text/markdown;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "devpath-roadmap.md";
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 export function GeneratorExperience() {
@@ -53,7 +65,14 @@ export function GeneratorExperience() {
   };
 
   if (state.status === "success") {
-    return <RoadmapResults result={state.result} onEdit={() => dispatch({ type: "EDIT" })} onRegenerate={() => void submit(state.input as RoadmapRequest)} onDownload={() => undefined} onPrint={() => undefined} onClear={() => dispatch({ type: "RESET" })} />;
+    const clear = () => {
+      if (!window.confirm("Clear your saved roadmap and all form inputs?")) return;
+      controller.current?.abort();
+      clearSession();
+      dispatch({ type: "RESET" });
+      window.setTimeout(() => document.getElementById("job-description")?.focus(), 0);
+    };
+    return <RoadmapResults result={state.result} onEdit={() => dispatch({ type: "EDIT" })} onRegenerate={() => void submit(state.input as RoadmapRequest)} onDownload={() => downloadMarkdown(roadmapToMarkdown(state.result))} onPrint={() => window.print()} onClear={clear} />;
   }
 
   return (
