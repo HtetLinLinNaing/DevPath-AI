@@ -15,10 +15,13 @@ export function buildDeveloperPrompt(): string {
 - Classify material requirements as required, preferred, or inferred and cite faithful source evidence.
 - Assess coverage as covered, partial, missing, or uncertain. Related technology alone is not proof of coverage.
 - Rank only material gaps by job importance, prerequisites, and employability impact.
+- Assign unique requirement IDs and reference only those IDs from gaps, phases, projects, and certifications.
 - Produce 4 to 6 phases in dependency order. Teach Docker before Kubernetes and cloud fundamentals before infrastructure as code.
+- Number phases sequentially starting at 1.
 - Every phase requires an effort range, scoped topics, activity, deliverable, acceptance criteria, interview checks, and requirement IDs.
 - Produce exactly 2 portfolio projects: one focused gap-closing project and one integrated capstone.
 - Derive the timeline from weekly availability, use ranges, and identify the earliest credible application week.
+- Number every timeline week sequentially starting at 1, reference only generated phase numbers, and keep the application start week inside the estimated timeline.
 - Use the traceability chain: Job Requirement -> Current Gap -> Learning Action -> Deliverable -> Acceptance Criteria.
 - Return exactly 3 top actions and 3 to 5 final advice items.
 - Never use a precise readiness percentage or make an employment guarantee.

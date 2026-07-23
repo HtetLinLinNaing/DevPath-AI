@@ -25,6 +25,10 @@ describe("roadmap prompts", () => {
     expect(prompt).toContain("Job Requirement -> Current Gap -> Learning Action -> Deliverable -> Acceptance Criteria");
     expect(prompt).toContain("AWS Certified Cloud Practitioner");
     expect(prompt).toContain("Do not invent certifications");
+    expect(prompt).toContain("unique requirement IDs");
+    expect(prompt).toContain("Number phases sequentially starting at 1");
+    expect(prompt).toContain("Number every timeline week sequentially starting at 1");
+    expect(prompt).toContain("application start week inside the estimated timeline");
   });
 
   it("delimits untrusted job and profile data", () => {
