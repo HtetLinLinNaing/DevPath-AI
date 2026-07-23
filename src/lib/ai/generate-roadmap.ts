@@ -92,12 +92,26 @@ function modelOutputError(retryable: boolean): AppError {
   );
 }
 
+function providerUnavailableError(): AppError {
+  return new AppError(
+    "PROVIDER_UNAVAILABLE",
+    "The roadmap service is temporarily unavailable. Please try again.",
+    true,
+    503,
+  );
+}
+
 export async function generateRoadmap(
   request: RoadmapRequest,
   dependencies: GenerationDependencies = {},
 ): Promise<GenerationResult> {
-  const client = dependencies.client
-    ?? (createOpenRouterClient() as unknown as RoadmapAIClient);
+  let client: RoadmapAIClient;
+  try {
+    client = dependencies.client
+      ?? (createOpenRouterClient() as unknown as RoadmapAIClient);
+  } catch {
+    throw providerUnavailableError();
+  }
   const clock = dependencies.clock ?? (() => new Date());
   const now = dependencies.now ?? Date.now;
   const startedAt = now();
@@ -166,10 +180,5 @@ export async function generateRoadmap(
   if (isAbortError(lastError) || dependencies.signal?.aborted) {
     throw new AppError("GENERATION_TIMEOUT", "Roadmap generation timed out. Please try again.", true, 504);
   }
-  throw new AppError(
-    "PROVIDER_UNAVAILABLE",
-    "The roadmap service is temporarily unavailable. Please try again.",
-    true,
-    503,
-  );
+  throw providerUnavailableError();
 }

@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+const { createOpenRouterClientMock } = vi.hoisted(() => ({
+  createOpenRouterClientMock: vi.fn(),
+}));
+
+vi.mock("@/lib/ai/openrouter-client", () => ({
+  createOpenRouterClient: createOpenRouterClientMock,
+}));
+
 import { generateRoadmap } from "@/lib/ai/generate-roadmap";
 import { RoadmapRequestSchema } from "@/lib/contracts/roadmap";
 import { AppError } from "@/lib/http/app-error";
@@ -33,7 +41,10 @@ function dependencies(parse: ReturnType<typeof vi.fn>, signal?: AbortSignal) {
 }
 
 describe("generateRoadmap", () => {
-  afterEach(() => vi.unstubAllEnvs());
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    createOpenRouterClientMock.mockReset();
+  });
 
   it("uses the configured OpenRouter model by default", async () => {
     vi.stubEnv("OPENROUTER_MODEL", "");
@@ -41,6 +52,17 @@ describe("generateRoadmap", () => {
     await generateRoadmap(request, dependencies(parse));
     expect(parse.mock.calls[0]?.[0]).toMatchObject({
       model: "xiaomi/mimo-v2.5-pro",
+    });
+  });
+
+  it("maps missing OpenRouter configuration to provider unavailable", async () => {
+    createOpenRouterClientMock.mockImplementationOnce(() => {
+      throw new Error("OPENROUTER_API_KEY is not configured");
+    });
+
+    await expect(generateRoadmap(request)).rejects.toMatchObject({
+      code: "PROVIDER_UNAVAILABLE",
+      retryable: true,
     });
   });
 
