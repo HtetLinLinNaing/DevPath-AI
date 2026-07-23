@@ -1,249 +1,98 @@
 # DevPath AI
 
-An AI-powered career mentor that helps freshers and developers discover career paths, identify skill gaps, and generate personalized learning roadmaps.
+DevPath AI converts a target job description and a candidate's current evidence into a validated job-readiness roadmap. It returns requirement coverage, prioritized gaps, four to six learning phases, exactly two portfolio projects, an application timeline, and optional certification guidance.
 
----
+## Prerequisites
 
-## 🚀 Overview
+- Node.js 22 LTS
+- npm 10 or newer
+- An OpenRouter API key with access to the configured model
+- Chromium and WebKit for the browser test suite
 
-DevPath AI helps aspiring developers and junior engineers make informed career decisions by analyzing their skills, interests, experience, and goals. The platform provides personalized career recommendations, learning roadmaps, job readiness assessments, and AI-powered mentoring.
+## Local Setup
 
----
-
-## ✨ Features
-
-### Skill Assessment
-
-Evaluate users based on:
-
-- Technical skills
-- Work experience
-- Interests
-- Career goals
-
-### Career Recommendations
-
-Recommend suitable career paths such as:
-
-- Frontend Developer
-- Backend Developer
-- Full Stack Developer
-- DevOps Engineer
-- Data Analyst
-- AI Engineer
-
-### Personalized Learning Roadmap
-
-Generate tailored learning plans including:
-
-- Skills to learn
-- Suggested projects
-- Learning milestones
-- Recommended resources
-
-### Job Readiness Score
-
-Provide:
-
-- Readiness percentage
-- Strengths
-- Skill gaps
-- Suggested next actions
-
-### AI Mentor
-
-Users can ask questions such as:
-
-- What should I learn next?
-- Am I job-ready?
-- Which projects should I build?
-- How can I become a mid-level developer?
-
-### Progress Tracking
-
-Track:
-
-- Completed skills
-- Roadmap progress
-- Learning milestones
-- Career growth
-
----
-
-## 🏗️ Tech Stack
-
-### Frontend
-
-- Next.js
-- TypeScript
-- Tailwind CSS
-- HeroUI
-
-### Backend
-
-- ASP.NET Core Web API
-- C#
-- Entity Framework Core
-
-### Database
-
-- PostgreSQL
-
-### AI
-
-- OpenAI API
-
-### Authentication
-
-- JWT Authentication
-
-### Deployment
-
-- Vercel (Frontend)
-- Railway / Render / Azure (Backend)
-- PostgreSQL Cloud Database
-
----
-
-## 📁 Project Structure
-
-```text
-devpath-ai/
-│
-├── frontend/
-│   ├── app/
-│   ├── components/
-│   ├── services/
-│   ├── hooks/
-│   ├── types/
-│   └── utils/
-│
-├── backend/
-│   ├── Controllers/
-│   ├── Services/
-│   ├── Repositories/
-│   ├── Models/
-│   ├── DTOs/
-│   ├── Data/
-│   ├── Middleware/
-│   └── AI/
-│
-├── database/
-│   └── schema.sql
-│
-├── docs/
-│   ├── architecture.md
-│   ├── api-spec.md
-│   └── user-flow.md
-│
-└── README.md
+```bash
+npm install
+npx playwright install chromium webkit
+cp .env.example .env.local
+npm run dev
 ```
 
----
+Open `http://localhost:3000`. The browser URL must exactly match `APP_ORIGIN`.
+With the documented defaults, only `OPENROUTER_API_KEY` needs a value:
 
-## 🗄️ Core Entities
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `OPENROUTER_API_KEY` | Yes | Server-only OpenRouter credential |
+| `OPENROUTER_MODEL` | No | Structured-output model; defaults to `xiaomi/mimo-v2.5-pro` |
+| `OPENROUTER_BASE_URL` | No | OpenRouter API root; defaults to `https://openrouter.ai/api/v1` |
+| `OPENROUTER_SITE_URL` | No | Site URL sent in OpenRouter attribution headers |
+| `OPENROUTER_APP_NAME` | No | Application name sent in OpenRouter attribution headers |
+| `GENERATION_TIMEOUT_MS` | No | Provider request deadline in milliseconds; defaults to `120000` |
+| `APP_ORIGIN` | Yes | Exact browser origin accepted by POST routes; use `http://localhost:3000` locally |
+| `RATE_LIMIT_SALT` | Production | Secret salt for privacy-safe client identity hashing |
 
-### User
+Never expose `OPENROUTER_API_KEY` through a `NEXT_PUBLIC_` variable.
 
-```json
-{
-  "id": "uuid",
-  "name": "string",
-  "email": "string",
-  "passwordHash": "string"
-}
+## Commands
+
+```bash
+npm run dev
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npm run test:e2e
+npm start
 ```
 
-### Assessment
+## Architecture
 
-```json
-{
-  "id": "uuid",
-  "userId": "uuid",
-  "experienceLevel": "Junior",
-  "skills": [],
-  "interests": [],
-  "goals": []
-}
+```mermaid
+flowchart LR
+  Browser[Next.js browser UI] -->|strict JSON| Generate[POST /api/generate-roadmap]
+  Browser -->|allowlisted metadata| Events[POST /api/events]
+  Generate --> Guard[origin, size, schema, rate limit]
+  Guard --> AI[OpenRouter Responses API]
+  AI --> Validate[Zod structure and semantic validation]
+  Validate --> Browser
+  Browser --> Session[sessionStorage]
+  Generate --> Logs[content-free operational logs]
+  Events --> Logs
 ```
 
-### Career Recommendation
+The App Router server owns provider calls and credentials. Zod contracts are the single source of truth for request, model-output, response, error, and event shapes. The browser state machine rejects stale completions and persists only a validated request/result pair.
 
-```json
-{
-  "id": "uuid",
-  "userId": "uuid",
-  "careerPath": "Backend Developer",
-  "confidenceScore": 85
-}
-```
+## Privacy And Security
 
-### Roadmap
+- `sessionStorage` is browser-local, scoped to the current tab session, and is not a server database.
+- Server logs and analytics must never include job descriptions, profiles, skills, constraints, prompts, generated roadmaps, provider messages, or stack traces.
+- Prompt layers treat job and profile text as untrusted data.
+- Browser CSP permits `connect-src 'self'`; OpenRouter is reachable only from server code.
+- POST routes enforce exact origin, byte limits, strict schemas, and no-store responses.
+- The in-process limiter supports local development only. Production must enforce five generation requests per minute at the edge using a privacy-safe client signal. Do not store raw IP addresses.
 
-```json
-{
-  "id": "uuid",
-  "userId": "uuid",
-  "careerPath": "Backend Developer",
-  "milestones": []
-}
-```
+Allowed log metadata is limited to: event name, timestamp, request ID, stable error code, export format, section ID, duration milliseconds, model identifier, schema version, input/output/reasoning token counts, and retry count.
 
-### Progress
+## Deployment
 
-```json
-{
-  "id": "uuid",
-  "userId": "uuid",
-  "completedSkills": [],
-  "completionPercentage": 40
-}
-```
+1. Run the complete release gate locally.
+2. Deploy the standalone Next.js output to a Node.js 22 platform.
+3. Configure a restricted OpenRouter key, `OPENROUTER_MODEL=xiaomi/mimo-v2.5-pro`, `OPENROUTER_BASE_URL=https://openrouter.ai/api/v1`, `GENERATION_TIMEOUT_MS=120000`, the exact production `APP_ORIGIN`, and a unique `RATE_LIMIT_SALT`.
+4. Configure edge rate limiting at five generation requests per minute per privacy-safe client signal.
+5. Verify CSP and no-store headers at the public origin.
+6. Run the staging smoke test before promoting traffic.
 
----
+## Staging Smoke Test
 
-## 🔄 User Flow
+1. Submit synthetic profile data and a job description containing a prompt-injection sentence.
+2. Confirm the instruction is ignored and the response contains four to six phases and exactly two projects.
+3. Confirm the earliest application point is visible.
+4. Refresh and verify browser-session restoration.
+5. Download Markdown and open the print dialog.
+6. Clear local data and verify the empty form receives focus.
+7. Search logs for submitted marker text and confirm it is absent.
 
-1. User registers and logs in.
-2. User completes skill assessment.
-3. AI analyzes assessment results.
-4. Career path recommendations are generated.
-5. Personalized roadmap is created.
-6. Job readiness score is calculated.
-7. User tracks progress through dashboard.
-8. User interacts with AI mentor for guidance.
+## Rollback
 
----
-
-## ✅ Definition of Done
-
-- [ ] User registration and login
-- [ ] Skill assessment form
-- [ ] Career recommendation engine
-- [ ] Personalized roadmap generation
-- [ ] Job readiness score calculation
-- [ ] AI mentor chat
-- [ ] Progress tracking dashboard
-- [ ] Responsive UI
-- [ ] Online deployment
-- [ ] Documentation and demo
-
----
-
-## 🎯 Future Improvements
-
-- Resume analysis
-- LinkedIn profile analysis
-- GitHub repository analysis
-- Interview preparation assistant
-- Learning resource recommendations
-- Team collaboration features
-- Community mentorship
-
----
-
-## 👨‍💻 Author
-
-Created by **Htet Lin Lin Naing**
-
-DevPath AI — Helping developers find their path with confidence.
+Keep the previous immutable application image and environment configuration. If generation, validation, privacy, or CSP checks regress, remove traffic from the new release, restore the previous image, and confirm the homepage, API availability, and one synthetic generation. Rotate the provider key immediately if credentials or user content may have been exposed. Preserve only content-free operational records for incident analysis.
