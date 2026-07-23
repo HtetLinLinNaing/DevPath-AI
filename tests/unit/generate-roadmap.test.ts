@@ -11,7 +11,7 @@ function response(overrides: Record<string, unknown> = {}) {
   return {
     output_parsed: structuredClone(validModelOutput),
     output: [],
-    model: "gpt-5.6-2026-07-01",
+    model: "xiaomi/mimo-v2.5-pro",
     usage: {
       input_tokens: 120,
       output_tokens: 480,
@@ -35,11 +35,13 @@ function dependencies(parse: ReturnType<typeof vi.fn>, signal?: AbortSignal) {
 describe("generateRoadmap", () => {
   afterEach(() => vi.unstubAllEnvs());
 
-  it("uses the supported GPT-5.6 Sol model by default", async () => {
-    vi.stubEnv("OPENAI_MODEL", "");
+  it("uses the configured OpenRouter model by default", async () => {
+    vi.stubEnv("OPENROUTER_MODEL", "");
     const parse = vi.fn().mockResolvedValue(response());
     await generateRoadmap(request, dependencies(parse));
-    expect(parse.mock.calls[0]?.[0]).toMatchObject({ model: "gpt-5.6-sol" });
+    expect(parse.mock.calls[0]?.[0]).toMatchObject({
+      model: "xiaomi/mimo-v2.5-pro",
+    });
   });
 
   it("returns a validated roadmap with content-free telemetry", async () => {
@@ -49,7 +51,7 @@ describe("generateRoadmap", () => {
     expect(result.roadmap.schemaVersion).toBe("1.0");
     expect(result.roadmap.generatedAt).toBe("2026-07-22T10:00:00.000Z");
     expect(result.telemetry).toMatchObject({
-      model: "gpt-5.6-2026-07-01",
+      model: "xiaomi/mimo-v2.5-pro",
       inputTokens: 120,
       outputTokens: 480,
       reasoningTokens: 40,

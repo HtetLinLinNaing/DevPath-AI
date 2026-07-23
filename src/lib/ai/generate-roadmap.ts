@@ -1,7 +1,7 @@
 import { zodTextFormat } from "openai/helpers/zod";
 
-import { configuredModel } from "@/lib/ai/config";
-import { createOpenAIClient } from "@/lib/ai/openai-client";
+import { configuredOpenRouterModel } from "@/lib/ai/config";
+import { createOpenRouterClient } from "@/lib/ai/openrouter-client";
 import {
   SYSTEM_INSTRUCTIONS,
   buildDeveloperPrompt,
@@ -97,7 +97,7 @@ export async function generateRoadmap(
   dependencies: GenerationDependencies = {},
 ): Promise<GenerationResult> {
   const client = dependencies.client
-    ?? (createOpenAIClient() as unknown as RoadmapAIClient);
+    ?? (createOpenRouterClient() as unknown as RoadmapAIClient);
   const clock = dependencies.clock ?? (() => new Date());
   const now = dependencies.now ?? Date.now;
   const startedAt = now();
@@ -112,7 +112,7 @@ export async function generateRoadmap(
     try {
       const response = await client.responses.parse(
         {
-          model: configuredModel(),
+          model: configuredOpenRouterModel(),
           instructions: SYSTEM_INSTRUCTIONS,
           input: [
             { role: "developer", content: buildDeveloperPrompt() },
@@ -141,7 +141,7 @@ export async function generateRoadmap(
       return {
         roadmap,
         telemetry: {
-          model: response.model ?? configuredModel(),
+          model: response.model ?? configuredOpenRouterModel(),
           inputTokens: usage?.input_tokens ?? 0,
           outputTokens: usage?.output_tokens ?? 0,
           reasoningTokens: usage?.output_tokens_details?.reasoning_tokens ?? 0,

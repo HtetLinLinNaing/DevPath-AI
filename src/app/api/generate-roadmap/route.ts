@@ -1,5 +1,8 @@
 import { generateRoadmap } from "@/lib/ai/generate-roadmap";
-import { configuredModel, generationTimeoutMs } from "@/lib/ai/config";
+import {
+  configuredOpenRouterModel,
+  generationTimeoutMs,
+} from "@/lib/ai/config";
 import { RoadmapRequestSchema } from "@/lib/contracts/roadmap";
 import { AppError } from "@/lib/http/app-error";
 import { getClientIdentity } from "@/lib/http/client-identity";
@@ -94,7 +97,7 @@ export async function POST(request: Request): Promise<Response> {
         requestId,
         errorCode: mapped.body.error.code,
         durationMs: Math.max(0, Date.now() - startedAt),
-        model: configuredModel(),
+        model: configuredOpenRouterModel(),
         retryCount: 0,
       },
     });

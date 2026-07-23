@@ -33,7 +33,7 @@ describe("POST /api/generate-roadmap", () => {
     mockedGenerate.mockReset().mockResolvedValue({
       roadmap,
       telemetry: {
-        model: "gpt-5.6",
+        model: "xiaomi/mimo-v2.5-pro",
         inputTokens: 1,
         outputTokens: 1,
         reasoningTokens: 0,
@@ -58,7 +58,7 @@ describe("POST /api/generate-roadmap", () => {
     expect(log).toMatchObject({
       name: "generation_succeeded",
       metadata: {
-        model: "gpt-5.6",
+        model: "xiaomi/mimo-v2.5-pro",
         durationMs: 10,
         inputTokens: 1,
         outputTokens: 1,
@@ -75,6 +75,18 @@ describe("POST /api/generate-roadmap", () => {
     const timeout = vi.spyOn(AbortSignal, "timeout");
     await POST(request(JSON.stringify(validRequest), { ip: "203.0.113.18" }));
     expect(timeout).toHaveBeenCalledWith(120_000);
+  });
+
+  it("logs the OpenRouter model for generation failures", async () => {
+    vi.stubEnv("OPENROUTER_MODEL", "");
+    mockedGenerate.mockRejectedValueOnce(new Error("provider secret"));
+
+    await POST(request(JSON.stringify(validRequest), { ip: "203.0.113.19" }));
+
+    expect(JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0] as string)).toMatchObject({
+      name: "generation_failed",
+      metadata: { model: "xiaomi/mimo-v2.5-pro" },
+    });
   });
 
   it("rejects malformed JSON", async () => {
