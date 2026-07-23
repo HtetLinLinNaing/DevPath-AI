@@ -6,7 +6,7 @@ DevPath AI converts a target job description and a candidate's current evidence 
 
 - Node.js 22 LTS
 - npm 10 or newer
-- An OpenAI API key with access to the configured model
+- An OpenRouter API key with access to the configured model
 - Chromium and WebKit for the browser test suite
 
 ## Local Setup
@@ -18,17 +18,21 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open `http://localhost:3000`. Set these environment variables:
+Open `http://localhost:3000`. The browser URL must exactly match `APP_ORIGIN`.
+With the documented defaults, only `OPENROUTER_API_KEY` needs a value:
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
-| `OPENAI_API_KEY` | Yes | Server-only provider credential |
-| `OPENAI_MODEL` | No | Structured-output model; defaults to `gpt-5.6-sol` |
+| `OPENROUTER_API_KEY` | Yes | Server-only OpenRouter credential |
+| `OPENROUTER_MODEL` | No | Structured-output model; defaults to `xiaomi/mimo-v2.5-pro` |
+| `OPENROUTER_BASE_URL` | No | OpenRouter API root; defaults to `https://openrouter.ai/api/v1` |
+| `OPENROUTER_SITE_URL` | No | Site URL sent in OpenRouter attribution headers |
+| `OPENROUTER_APP_NAME` | No | Application name sent in OpenRouter attribution headers |
 | `GENERATION_TIMEOUT_MS` | No | Provider request deadline in milliseconds; defaults to `120000` |
-| `APP_ORIGIN` | Yes | Exact browser origin accepted by POST routes |
+| `APP_ORIGIN` | Yes | Exact browser origin accepted by POST routes; use `http://localhost:3000` locally |
 | `RATE_LIMIT_SALT` | Production | Secret salt for privacy-safe client identity hashing |
 
-Never expose `OPENAI_API_KEY` through a `NEXT_PUBLIC_` variable.
+Never expose `OPENROUTER_API_KEY` through a `NEXT_PUBLIC_` variable.
 
 ## Commands
 
@@ -49,7 +53,7 @@ flowchart LR
   Browser[Next.js browser UI] -->|strict JSON| Generate[POST /api/generate-roadmap]
   Browser -->|allowlisted metadata| Events[POST /api/events]
   Generate --> Guard[origin, size, schema, rate limit]
-  Guard --> AI[OpenAI Responses API]
+  Guard --> AI[OpenRouter Responses API]
   AI --> Validate[Zod structure and semantic validation]
   Validate --> Browser
   Browser --> Session[sessionStorage]
@@ -64,7 +68,7 @@ The App Router server owns provider calls and credentials. Zod contracts are the
 - `sessionStorage` is browser-local, scoped to the current tab session, and is not a server database.
 - Server logs and analytics must never include job descriptions, profiles, skills, constraints, prompts, generated roadmaps, provider messages, or stack traces.
 - Prompt layers treat job and profile text as untrusted data.
-- Browser CSP permits `connect-src 'self'`; OpenAI is reachable only from server code.
+- Browser CSP permits `connect-src 'self'`; OpenRouter is reachable only from server code.
 - POST routes enforce exact origin, byte limits, strict schemas, and no-store responses.
 - The in-process limiter supports local development only. Production must enforce five generation requests per minute at the edge using a privacy-safe client signal. Do not store raw IP addresses.
 
@@ -74,7 +78,7 @@ Allowed log metadata is limited to: event name, timestamp, request ID, stable er
 
 1. Run the complete release gate locally.
 2. Deploy the standalone Next.js output to a Node.js 22 platform.
-3. Configure a restricted OpenAI key, `OPENAI_MODEL=gpt-5.6-sol`, `GENERATION_TIMEOUT_MS=120000`, the exact production `APP_ORIGIN`, and a unique `RATE_LIMIT_SALT`.
+3. Configure a restricted OpenRouter key, `OPENROUTER_MODEL=xiaomi/mimo-v2.5-pro`, `OPENROUTER_BASE_URL=https://openrouter.ai/api/v1`, `GENERATION_TIMEOUT_MS=120000`, the exact production `APP_ORIGIN`, and a unique `RATE_LIMIT_SALT`.
 4. Configure edge rate limiting at five generation requests per minute per privacy-safe client signal.
 5. Verify CSP and no-store headers at the public origin.
 6. Run the staging smoke test before promoting traffic.
