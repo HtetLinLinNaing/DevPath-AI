@@ -43,7 +43,10 @@ describe("POST /api/generate-roadmap", () => {
     });
   });
 
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+  });
 
   it("returns a validated roadmap with no-store and request ID headers", async () => {
     const response = await POST(request(JSON.stringify(validRequest), { ip: "203.0.113.10" }));
@@ -65,6 +68,13 @@ describe("POST /api/generate-roadmap", () => {
       },
     });
     expect(JSON.stringify(log)).not.toContain(validRequest.jobDescription);
+  });
+
+  it("allows the configured generation window for strict roadmap output", async () => {
+    vi.stubEnv("GENERATION_TIMEOUT_MS", "120000");
+    const timeout = vi.spyOn(AbortSignal, "timeout");
+    await POST(request(JSON.stringify(validRequest), { ip: "203.0.113.18" }));
+    expect(timeout).toHaveBeenCalledWith(120_000);
   });
 
   it("rejects malformed JSON", async () => {

@@ -1,5 +1,6 @@
 import { zodTextFormat } from "openai/helpers/zod";
 
+import { configuredModel } from "@/lib/ai/config";
 import { createOpenAIClient } from "@/lib/ai/openai-client";
 import {
   SYSTEM_INSTRUCTIONS,
@@ -69,7 +70,12 @@ function providerStatus(error: unknown): number | undefined {
 }
 
 function isAbortError(error: unknown): boolean {
-  return error instanceof Error && (error.name === "AbortError" || error.name === "TimeoutError");
+  return error instanceof Error && (
+    error.name === "AbortError"
+    || error.name === "TimeoutError"
+    || error.constructor.name === "APIUserAbortError"
+    || error.message === "Request was aborted."
+  );
 }
 
 function isRetryableProviderError(error: unknown): boolean {
@@ -106,7 +112,7 @@ export async function generateRoadmap(
     try {
       const response = await client.responses.parse(
         {
-          model: process.env.OPENAI_MODEL ?? "gpt-5.6",
+          model: configuredModel(),
           instructions: SYSTEM_INSTRUCTIONS,
           input: [
             { role: "developer", content: buildDeveloperPrompt() },
@@ -135,7 +141,7 @@ export async function generateRoadmap(
       return {
         roadmap,
         telemetry: {
-          model: response.model ?? process.env.OPENAI_MODEL ?? "gpt-5.6",
+          model: response.model ?? configuredModel(),
           inputTokens: usage?.input_tokens ?? 0,
           outputTokens: usage?.output_tokens ?? 0,
           reasoningTokens: usage?.output_tokens_details?.reasoning_tokens ?? 0,
@@ -144,6 +150,9 @@ export async function generateRoadmap(
         },
       };
     } catch (error) {
+      if (isAbortError(error) || dependencies.signal?.aborted) {
+        throw new AppError("GENERATION_TIMEOUT", "Roadmap generation timed out. Please try again.", true, 504);
+      }
       if (error instanceof AppError && !error.retryable) throw error;
       lastError = error;
       const retryable = error instanceof AppError ? error.retryable : isRetryableProviderError(error);

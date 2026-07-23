@@ -23,7 +23,8 @@ Open `http://localhost:3000`. Set these environment variables:
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `OPENAI_API_KEY` | Yes | Server-only provider credential |
-| `OPENAI_MODEL` | No | Structured-output model; defaults to `gpt-5.6` |
+| `OPENAI_MODEL` | No | Structured-output model; defaults to `gpt-5.6-sol` |
+| `GENERATION_TIMEOUT_MS` | No | Provider request deadline in milliseconds; defaults to `120000` |
 | `APP_ORIGIN` | Yes | Exact browser origin accepted by POST routes |
 | `RATE_LIMIT_SALT` | Production | Secret salt for privacy-safe client identity hashing |
 
@@ -73,7 +74,7 @@ Allowed log metadata is limited to: event name, timestamp, request ID, stable er
 
 1. Run the complete release gate locally.
 2. Deploy the standalone Next.js output to a Node.js 22 platform.
-3. Configure a restricted OpenAI key, `OPENAI_MODEL=gpt-5.6`, the exact production `APP_ORIGIN`, and a unique `RATE_LIMIT_SALT`.
+3. Configure a restricted OpenAI key, `OPENAI_MODEL=gpt-5.6-sol`, `GENERATION_TIMEOUT_MS=120000`, the exact production `APP_ORIGIN`, and a unique `RATE_LIMIT_SALT`.
 4. Configure edge rate limiting at five generation requests per minute per privacy-safe client signal.
 5. Verify CSP and no-store headers at the public origin.
 6. Run the staging smoke test before promoting traffic.

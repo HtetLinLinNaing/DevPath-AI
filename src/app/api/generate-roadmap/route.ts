@@ -1,4 +1,5 @@
 import { generateRoadmap } from "@/lib/ai/generate-roadmap";
+import { configuredModel, generationTimeoutMs } from "@/lib/ai/config";
 import { RoadmapRequestSchema } from "@/lib/contracts/roadmap";
 import { AppError } from "@/lib/http/app-error";
 import { getClientIdentity } from "@/lib/http/client-identity";
@@ -69,7 +70,7 @@ export async function POST(request: Request): Promise<Response> {
     const input = await parseRequest(request);
     const result = await generateRoadmap(input, {
       requestId,
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(generationTimeoutMs()),
     });
     logTelemetry({
       name: "generation_succeeded",
@@ -93,7 +94,7 @@ export async function POST(request: Request): Promise<Response> {
         requestId,
         errorCode: mapped.body.error.code,
         durationMs: Math.max(0, Date.now() - startedAt),
-        model: process.env.OPENAI_MODEL ?? "gpt-5.6",
+        model: configuredModel(),
         retryCount: 0,
       },
     });

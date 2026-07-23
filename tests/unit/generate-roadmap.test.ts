@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { generateRoadmap } from "@/lib/ai/generate-roadmap";
 import { RoadmapRequestSchema } from "@/lib/contracts/roadmap";
@@ -33,6 +33,15 @@ function dependencies(parse: ReturnType<typeof vi.fn>, signal?: AbortSignal) {
 }
 
 describe("generateRoadmap", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("uses the supported GPT-5.6 Sol model by default", async () => {
+    vi.stubEnv("OPENAI_MODEL", "");
+    const parse = vi.fn().mockResolvedValue(response());
+    await generateRoadmap(request, dependencies(parse));
+    expect(parse.mock.calls[0]?.[0]).toMatchObject({ model: "gpt-5.6-sol" });
+  });
+
   it("returns a validated roadmap with content-free telemetry", async () => {
     const parse = vi.fn().mockResolvedValue(response());
     const result = await generateRoadmap(request, dependencies(parse));
@@ -107,5 +116,15 @@ describe("generateRoadmap", () => {
       code: "GENERATION_TIMEOUT",
     });
     expect(parse).not.toHaveBeenCalled();
+  });
+
+  it("maps the OpenAI SDK user-abort error to a timeout without retrying", async () => {
+    class APIUserAbortError extends Error {}
+    const parse = vi.fn().mockRejectedValue(new APIUserAbortError("Request was aborted."));
+    await expect(generateRoadmap(request, dependencies(parse))).rejects.toMatchObject({
+      code: "GENERATION_TIMEOUT",
+      retryable: true,
+    });
+    expect(parse).toHaveBeenCalledOnce();
   });
 });
