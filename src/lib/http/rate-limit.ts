@@ -49,6 +49,6 @@ export function createRateLimiter({ limit, windowMs, maxEntries }: RateLimitOpti
 // Deployment-edge throttling is still required because this state is instance-local.
 export const checkRateLimit = createRateLimiter({
   limit: 5,
-  windowMs: 60_000,
+  windowMs: 10 * 60_000,
   maxEntries: 10_000,
 });

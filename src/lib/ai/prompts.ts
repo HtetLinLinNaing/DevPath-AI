@@ -19,6 +19,9 @@ export function buildDeveloperPrompt(): string {
 - Produce 4 to 6 phases in dependency order. Teach Docker before Kubernetes and cloud fundamentals before infrastructure as code.
 - Number phases sequentially starting at 1.
 - Every phase requires an effort range, scoped topics, activity, deliverable, acceptance criteria, interview checks, and requirement IDs.
+- Keep every user-facing field extremely concise: one short sentence (maximum 18 words) or a 2 to 4 word label.
+- Limit each phase to 2 to 3 topics, 1 acceptance criterion, and 1 interview check. Use no filler or repeated explanations.
+- Make phase titles action-oriented and no longer than 5 words. Make deliverables concrete and scannable.
 - Produce exactly 2 portfolio projects: one focused gap-closing project and one integrated capstone.
 - Derive the timeline from weekly availability, use ranges, and identify the earliest credible application week.
 - Number every timeline week sequentially starting at 1, reference only generated phase numbers, and keep the application start week inside the estimated timeline.

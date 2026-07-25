@@ -29,6 +29,8 @@ describe("roadmap prompts", () => {
     expect(prompt).toContain("Number phases sequentially starting at 1");
     expect(prompt).toContain("Number every timeline week sequentially starting at 1");
     expect(prompt).toContain("application start week inside the estimated timeline");
+    expect(prompt).toContain("maximum 18 words");
+    expect(prompt).toContain("1 acceptance criterion");
   });
 
   it("delimits untrusted job and profile data", () => {

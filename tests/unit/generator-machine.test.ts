@@ -56,7 +56,7 @@ describe("generatorReducer", () => {
     expect(createInitialRequest()).toMatchObject({
       jobDescription: "",
       targetRole: "",
-      consentToAIProcessing: false,
+      consentToAIProcessing: true,
       profile: {
         skills: [{ name: "", proficiency: "aware" }],
         weeklyHours: "6-10",
@@ -65,4 +65,3 @@ describe("generatorReducer", () => {
     });
   });
 });
-

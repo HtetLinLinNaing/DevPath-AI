@@ -5,18 +5,23 @@ import {
 } from "@/lib/ai/config";
 import { RoadmapRequestSchema } from "@/lib/contracts/roadmap";
 import { AppError } from "@/lib/http/app-error";
-import { getClientIdentity } from "@/lib/http/client-identity";
+import {
+  resolveClientSession,
+  type ClientSession,
+} from "@/lib/http/client-session";
 import { checkRateLimit } from "@/lib/http/rate-limit";
 import { toErrorResponse } from "@/lib/http/route-response";
 import { logTelemetry } from "@/lib/telemetry/logger";
 
 const MAX_BODY_BYTES = 51_200;
 
-function responseHeaders(requestId: string): HeadersInit {
-  return {
+function responseHeaders(requestId: string, session?: ClientSession): Headers {
+  const headers = new Headers({
     "Cache-Control": "no-store, max-age=0",
     "X-Request-Id": requestId,
-  };
+  });
+  if (session?.setCookie) headers.append("Set-Cookie", session.setCookie);
+  return headers;
 }
 
 function validateOrigin(request: Request): void {
@@ -56,10 +61,12 @@ async function parseRequest(request: Request) {
 export async function POST(request: Request): Promise<Response> {
   const requestId = crypto.randomUUID();
   const startedAt = Date.now();
+  let clientSession: ClientSession | undefined;
   try {
     validateOrigin(request);
 
-    const rateLimit = checkRateLimit(getClientIdentity(request.headers));
+    clientSession = resolveClientSession(request.headers);
+    const rateLimit = checkRateLimit(clientSession.identity);
     if (!rateLimit.allowed) {
       throw new AppError(
         "RATE_LIMITED",
@@ -86,7 +93,7 @@ export async function POST(request: Request): Promise<Response> {
     });
     return Response.json(result.roadmap, {
       status: 200,
-      headers: responseHeaders(requestId),
+      headers: responseHeaders(requestId, clientSession),
     });
   } catch (error) {
     const mapped = toErrorResponse(error, requestId);
@@ -101,7 +108,7 @@ export async function POST(request: Request): Promise<Response> {
         retryCount: 0,
       },
     });
-    const headers = new Headers(responseHeaders(requestId));
+    const headers = responseHeaders(requestId, clientSession);
     if (mapped.retryAfterSeconds !== undefined) {
       headers.set("Retry-After", String(mapped.retryAfterSeconds));
     }

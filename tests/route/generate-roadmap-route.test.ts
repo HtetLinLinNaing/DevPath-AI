@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { generateRoadmap } from "@/lib/ai/generate-roadmap";
 import { RoadmapResponseSchema } from "@/lib/contracts/roadmap";
 import { AppError } from "@/lib/http/app-error";
+import { CLIENT_SESSION_COOKIE } from "@/lib/http/client-session";
 import { validModelOutput, validRequest } from "../fixtures/roadmap";
 
 vi.mock("@/lib/ai/generate-roadmap", () => ({ generateRoadmap: vi.fn() }));
@@ -16,19 +17,27 @@ const roadmap = RoadmapResponseSchema.parse({
   generatedAt: "2026-07-22T10:00:00.000Z",
 });
 
-function request(body: string, options: { ip?: string; origin?: string; contentLength?: string } = {}) {
+function request(body: string, options: { cookie?: string; ip?: string; origin?: string; contentLength?: string } = {}) {
   const headers = new Headers({
     "content-type": "application/json",
     "x-forwarded-for": options.ip ?? `203.0.113.${Math.floor(Math.random() * 200) + 1}`,
   });
+  if (options.cookie) headers.set("cookie", options.cookie);
   if (options.origin) headers.set("origin", options.origin);
   if (options.contentLength) headers.set("content-length", options.contentLength);
   return new Request("http://localhost:3000/api/generate-roadmap", { method: "POST", headers, body });
 }
 
+function responseCookie(response: Response): string {
+  const setCookie = response.headers.get("set-cookie");
+  expect(setCookie).toContain(`${CLIENT_SESSION_COOKIE}=`);
+  return setCookie?.split(";")[0] ?? "";
+}
+
 describe("POST /api/generate-roadmap", () => {
   beforeEach(() => {
     vi.stubEnv("APP_ORIGIN", "http://localhost:3000");
+    vi.stubEnv("COOKIE_SECRET", "route-test-cookie-secret");
     vi.spyOn(console, "info").mockImplementation(() => undefined);
     mockedGenerate.mockReset().mockResolvedValue({
       roadmap,
@@ -117,14 +126,39 @@ describe("POST /api/generate-roadmap", () => {
     expect(response.status).toBe(400);
   });
 
-  it("rate limits the sixth request and supplies Retry-After", async () => {
-    const ip = "203.0.113.15";
-    for (let count = 0; count < 5; count += 1) {
-      expect((await POST(request(JSON.stringify(validRequest), { ip }))).status).toBe(200);
+  it("rate limits the sixth request by signed cookie across changing IPs", async () => {
+    const first = await POST(request(JSON.stringify(validRequest), { ip: "203.0.113.15" }));
+    expect(first.status).toBe(200);
+    const cookie = responseCookie(first);
+
+    for (let count = 1; count < 5; count += 1) {
+      expect((await POST(request(JSON.stringify(validRequest), {
+        cookie,
+        ip: `203.0.113.${15 + count}`,
+      }))).status).toBe(200);
     }
-    const response = await POST(request(JSON.stringify(validRequest), { ip }));
+    const response = await POST(request(JSON.stringify(validRequest), {
+      cookie,
+      ip: "198.51.100.25",
+    }));
     expect(response.status).toBe(429);
-    expect(response.headers.get("retry-after")).toBeTruthy();
+    expect(response.headers.get("retry-after")).toBe("600");
+    expect(mockedGenerate).toHaveBeenCalledTimes(5);
+  });
+
+  it("keeps separate cookie identities independent behind one gateway IP", async () => {
+    const ip = "203.0.113.200";
+    const firstA = await POST(request(JSON.stringify(validRequest), { ip }));
+    const firstB = await POST(request(JSON.stringify(validRequest), { ip }));
+    const cookieA = responseCookie(firstA);
+    const cookieB = responseCookie(firstB);
+    expect(cookieA).not.toBe(cookieB);
+
+    for (let count = 1; count < 5; count += 1) {
+      expect((await POST(request(JSON.stringify(validRequest), { cookie: cookieA, ip }))).status).toBe(200);
+    }
+    expect((await POST(request(JSON.stringify(validRequest), { cookie: cookieA, ip }))).status).toBe(429);
+    expect((await POST(request(JSON.stringify(validRequest), { cookie: cookieB, ip }))).status).toBe(200);
   });
 
   it("maps generation timeout and unexpected failure", async () => {

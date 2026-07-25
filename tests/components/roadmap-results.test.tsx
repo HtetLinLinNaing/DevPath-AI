@@ -28,8 +28,8 @@ describe("RoadmapResults", () => {
     result.readiness.topActions.forEach((action) => expect(screen.getByText(action)).toBeInTheDocument());
     expect(screen.getByText(result.readiness.applicationRecommendation)).toBeInTheDocument();
 
-    const table = screen.getByRole("table", { name: /job requirement coverage/i });
-    ["Requirement", "Evidence from job", "Importance", "Coverage", "Confidence", "Assessment"].forEach((header) => {
+    const table = screen.getByRole("table", { name: /job requirements compared/i });
+    ["Job requires", "What the job says", "Priority", "Your coverage", "Confidence", "What this means"].forEach((header) => {
       expect(within(table).getByRole("columnheader", { name: header })).toBeInTheDocument();
     });
     result.requirements.forEach((requirement) => {
@@ -38,17 +38,13 @@ describe("RoadmapResults", () => {
       expect(within(table).getAllByText(requirement.confidence, { exact: false }).length).toBeGreaterThan(0);
     });
 
-    result.gaps.forEach((gap) => {
-      expect(screen.getByRole("heading", { name: gap.name })).toBeInTheDocument();
-      expect(screen.getAllByText(gap.priority, { exact: false }).length).toBeGreaterThan(0);
-      gap.assumptions.forEach((assumption) => expect(screen.getByText(assumption)).toBeInTheDocument());
-    });
+    expect(screen.queryByRole("heading", { name: "Priority gaps" })).not.toBeInTheDocument();
 
     const phases = screen.getAllByTestId("roadmap-phase");
     expect(phases).toHaveLength(4);
     result.roadmap.forEach((phase, index) => {
       expect(within(phases[index]!).getByText(phase.acceptanceCriteria[0]!)).toBeInTheDocument();
-      expect(within(phases[index]!).getByText(phase.interviewChecks[0]!)).toBeInTheDocument();
+      expect(within(phases[index]!).getByText(phase.deliverable)).toBeInTheDocument();
     });
     expect(screen.getAllByTestId("portfolio-project")).toHaveLength(2);
     result.projects.forEach((project) => {
@@ -63,9 +59,10 @@ describe("RoadmapResults", () => {
     result.finalAdvice.forEach((advice) => expect(screen.getByText(advice)).toBeInTheDocument());
 
     const nav = screen.getByRole("navigation", { name: "Roadmap sections" });
-    ["summary", "requirements", "gaps", "roadmap", "projects", "timeline", "advice"].forEach((section) => {
+    ["summary", "requirements", "roadmap", "projects", "timeline", "advice"].forEach((section) => {
       expect(within(nav).getByRole("link", { name: new RegExp(section, "i") })).toHaveAttribute("href", `#${section}`);
       expect(document.getElementById(section)).toBeInTheDocument();
     });
+    expect(within(nav).queryByRole("link", { name: /gaps/i })).not.toBeInTheDocument();
   });
 });

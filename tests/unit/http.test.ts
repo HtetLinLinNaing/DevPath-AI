@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { AppError } from "@/lib/http/app-error";
-import { getClientIdentity } from "@/lib/http/client-identity";
-import { createRateLimiter } from "@/lib/http/rate-limit";
+import {
+  CLIENT_SESSION_COOKIE,
+  resolveClientSession,
+  sessionCookieSecret,
+} from "@/lib/http/client-session";
+import { checkRateLimit, createRateLimiter } from "@/lib/http/rate-limit";
 import { toErrorResponse } from "@/lib/http/route-response";
 
 describe("HTTP error mapping", () => {
@@ -37,17 +41,73 @@ describe("HTTP error mapping", () => {
   });
 });
 
-describe("client identity", () => {
-  it("hashes the first forwarded address with the configured salt", () => {
-    const headers = new Headers({ "x-forwarded-for": "203.0.113.4, 10.0.0.1" });
-    const first = getClientIdentity(headers, "test-salt");
-    const second = getClientIdentity(headers, "test-salt");
-    expect(first).toBe(second);
-    expect(first).not.toContain("203.0.113.4");
+describe("signed client session", () => {
+  const uuid = "11111111-1111-4111-8111-111111111111";
+
+  it("creates a signed anonymous cookie with restrictive attributes", () => {
+    const session = resolveClientSession(new Headers(), {
+      createId: () => uuid,
+      secret: "test-cookie-secret",
+      secure: false,
+    });
+
+    expect(session.identity).toBe(uuid);
+    expect(session.setCookie).toContain(`${CLIENT_SESSION_COOKIE}=`);
+    expect(session.setCookie).toContain("Max-Age=2592000");
+    expect(session.setCookie).toContain("Path=/api/generate-roadmap");
+    expect(session.setCookie).toContain("HttpOnly");
+    expect(session.setCookie).toContain("SameSite=Lax");
+    expect(session.setCookie).not.toContain("Secure");
   });
 
-  it("falls back without exposing a raw address", () => {
-    expect(getClientIdentity(new Headers(), "test-salt")).toMatch(/^[a-f0-9]{64}$/);
+  it("keeps a valid cookie identity when the request IP changes", () => {
+    const created = resolveClientSession(new Headers(), {
+      createId: () => uuid,
+      secret: "test-cookie-secret",
+      secure: true,
+    });
+    const cookie = created.setCookie?.split(";")[0];
+    const headers = new Headers({
+      cookie: cookie ?? "",
+      "x-forwarded-for": "198.51.100.200",
+    });
+
+    const restored = resolveClientSession(headers, {
+      createId: () => {
+        throw new Error("valid cookies must not create another UUID");
+      },
+      secret: "test-cookie-secret",
+      secure: true,
+    });
+
+    expect(restored).toEqual({ identity: uuid });
+    expect(created.setCookie).toContain("Secure");
+  });
+
+  it("replaces a cookie whose signature was tampered with", () => {
+    const created = resolveClientSession(new Headers(), {
+      createId: () => uuid,
+      secret: "test-cookie-secret",
+      secure: false,
+    });
+    const cookie = created.setCookie?.split(";")[0] ?? "";
+    const tampered = `${cookie.slice(0, -1)}${cookie.endsWith("a") ? "b" : "a"}`;
+    const replacement = "22222222-2222-4222-8222-222222222222";
+
+    const resolved = resolveClientSession(new Headers({ cookie: tampered }), {
+      createId: () => replacement,
+      secret: "test-cookie-secret",
+      secure: false,
+    });
+
+    expect(resolved.identity).toBe(replacement);
+    expect(resolved.setCookie).toContain(`${CLIENT_SESSION_COOKIE}=`);
+  });
+
+  it("requires COOKIE_SECRET in production", () => {
+    expect(() => sessionCookieSecret({ NODE_ENV: "production" })).toThrow(
+      "COOKIE_SECRET must be configured in production",
+    );
   });
 });
 
@@ -66,6 +126,18 @@ describe("rate limiter", () => {
     expect(check("client", 1_000).allowed).toBe(true);
     expect(check("client", 1_500).allowed).toBe(false);
     expect(check("client", 2_000).allowed).toBe(true);
+  });
+
+  it("configures the production limiter for the exact ten-minute boundary", () => {
+    for (let attempt = 1; attempt <= 5; attempt += 1) {
+      expect(checkRateLimit("configured-boundary-client", 1_000).allowed).toBe(true);
+    }
+
+    expect(checkRateLimit("configured-boundary-client", 600_999)).toMatchObject({
+      allowed: false,
+      retryAfterSeconds: 1,
+    });
+    expect(checkRateLimit("configured-boundary-client", 601_000).allowed).toBe(true);
   });
 
   it("evicts expired entries before enforcing the map cap", () => {
