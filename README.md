@@ -78,6 +78,12 @@ Allowed log metadata is limited to: event name, timestamp, request ID, stable er
 
 ## Deployment
 
+The landing demo is hosted by YouTube and loaded through
+`youtube-nocookie.com` only after the visitor selects Play. The repository
+contains only a compressed poster image; do not commit the video binary.
+Keep `frame-src https://www.youtube-nocookie.com` in the production Content
+Security Policy.
+
 1. Run the complete release gate locally.
 2. Deploy the standalone Next.js output to a Node.js 22 platform.
 3. Configure a restricted OpenRouter key, `OPENROUTER_MODEL=xiaomi/mimo-v2.5-pro`, `OPENROUTER_BASE_URL=https://openrouter.ai/api/v1`, `GENERATION_TIMEOUT_MS=120000`, the exact production `APP_ORIGIN`, and a strong unique `COOKIE_SECRET`.
