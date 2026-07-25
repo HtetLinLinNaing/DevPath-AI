@@ -1,9 +1,10 @@
 import { GeneratorExperience } from "@/features/generator/GeneratorExperience";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LandingGate } from "@/features/landing/LandingGate";
 
 export default function HomePage() {
   return (
-    <>
+    <LandingGate>
       <header className="productHeader">
         <h1>
           <a href="#main-content" className="brand" aria-label="devPathAI home">
@@ -15,6 +16,6 @@ export default function HomePage() {
       <main id="main-content" className="pageShell">
         <GeneratorExperience />
       </main>
-    </>
+    </LandingGate>
   );
 }
