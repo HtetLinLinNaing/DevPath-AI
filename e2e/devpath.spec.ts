@@ -2,17 +2,30 @@ import { expect, test, type Page } from "@playwright/test";
 import roadmap from "./fixtures/roadmap.json" with { type: "json" };
 
 const longDescription = "Backend engineer role requiring Node.js, Docker, AWS, CI/CD, testing, observability, security, APIs, databases, and communication. ".repeat(3);
+const LANDING_SESSION_KEY = "devpath-landing-dismissed";
 
 async function mockEvents(page: Page) {
   await page.route("**/api/events", (route) => route.fulfill({ status: 204 }));
 }
 
 async function gotoHydratedApp(page: Page) {
+  await page.addInitScript((key) => {
+    sessionStorage.setItem(key, "1");
+  }, LANDING_SESSION_KEY);
   const hydrated = page.waitForResponse((response) =>
     response.url().endsWith("/api/events") && response.request().method() === "POST"
   );
   await page.goto("/");
   await hydrated;
+}
+
+async function gotoLanding(page: Page) {
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", {
+      name: "Turn a target role into a credible path forward.",
+    }),
+  ).toBeVisible();
 }
 
 async function fillValidForm(page: Page) {
@@ -25,6 +38,71 @@ async function fillValidForm(page: Page) {
 
 test.beforeEach(async ({ page }) => {
   await mockEvents(page);
+});
+
+test("presents the landing curtain and lazy privacy-enhanced demo", async ({ page }) => {
+  await gotoLanding(page);
+  const response = await page.request.get("/");
+  expect(response.headers()["content-security-policy"]).toContain(
+    "frame-src https://www.youtube-nocookie.com",
+  );
+  expect(response.headers()["content-security-policy"]).toContain(
+    "connect-src 'self'",
+  );
+  await expect(page.getByLabel("Job description")).toHaveCount(0);
+  await expect(page.getByTitle("DevPath-AI product demonstration")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Play product demo" }).click();
+  await expect(page.getByTitle("DevPath-AI product demonstration")).toHaveAttribute(
+    "src",
+    /youtube-nocookie\.com\/embed\/mDVlat1dtDY/,
+  );
+  await expect(page.getByRole("link", { name: "Watch on YouTube" })).toHaveAttribute(
+    "href",
+    "https://www.youtube.com/watch?v=mDVlat1dtDY",
+  );
+});
+
+test("reveals and remembers the unchanged generator for the tab session", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await gotoLanding(page);
+  await page.getByRole("button", { name: "Build my roadmap" }).first().click();
+  await expect(page.getByLabel("Job description")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Build your shortest credible path to the role." }),
+  ).toBeFocused();
+  expect(
+    await page.evaluate((key) => sessionStorage.getItem(key), LANDING_SESSION_KEY),
+  ).toBe("1");
+
+  await page.reload();
+  await expect(page.getByLabel("Job description")).toBeVisible();
+  await expect(page.getByTestId("landing-curtain")).toHaveCount(0);
+});
+
+test("keeps the landing curtain within a 320px viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await gotoLanding(page);
+  const dimensions = await page.evaluate(() => ({
+    viewport: window.innerWidth,
+    document: document.documentElement.scrollWidth,
+  }));
+  expect(dimensions).toEqual({ viewport: 320, document: 320 });
+
+  const play = await page.getByRole("button", { name: "Play product demo" }).boundingBox();
+  expect(play?.width).toBeLessThanOrEqual(296);
+  expect(play?.height).toBeGreaterThanOrEqual(160);
+});
+
+test("keeps primary landing actions usable at a 200% zoom equivalent", async ({ page }) => {
+  await page.setViewportSize({ width: 640, height: 450 });
+  await gotoLanding(page);
+  await expect(page.getByRole("button", { name: "Build my roadmap" }).first()).toBeVisible();
+  await page.getByRole("heading", { name: "Find your shortest credible path." }).scrollIntoViewIfNeeded();
+  await expect(page.getByRole("button", { name: "Build my roadmap" }).last()).toBeVisible();
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth),
+  ).toBeLessThanOrEqual(640);
 });
 
 test("generates, restores, exports, prints, and clears a roadmap", async ({ page }) => {
