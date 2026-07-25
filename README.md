@@ -30,7 +30,7 @@ With the documented defaults, only `OPENROUTER_API_KEY` needs a value:
 | `OPENROUTER_APP_NAME` | No | Application name sent in OpenRouter attribution headers |
 | `GENERATION_TIMEOUT_MS` | No | Provider request deadline in milliseconds; defaults to `120000` |
 | `APP_ORIGIN` | Yes | Exact browser origin accepted by POST routes; use `http://localhost:3000` locally |
-| `RATE_LIMIT_SALT` | Production | Secret salt for privacy-safe client identity hashing |
+| `COOKIE_SECRET` | Production | Strong unique secret for signing anonymous browser UUID cookies |
 
 Never expose `OPENROUTER_API_KEY` through a `NEXT_PUBLIC_` variable.
 
@@ -51,6 +51,7 @@ npm start
 ```mermaid
 flowchart LR
   Browser[Next.js browser UI] -->|strict JSON| Generate[POST /api/generate-roadmap]
+  Browser -->|signed anonymous UUID cookie| Generate
   Browser -->|allowlisted metadata| Events[POST /api/events]
   Generate --> Guard[origin, size, schema, rate limit]
   Guard --> AI[OpenRouter Responses API]
@@ -70,7 +71,8 @@ The App Router server owns provider calls and credentials. Zod contracts are the
 - Prompt layers treat job and profile text as untrusted data.
 - Browser CSP permits `connect-src 'self'`; OpenRouter is reachable only from server code.
 - POST routes enforce exact origin, byte limits, strict schemas, and no-store responses.
-- The in-process limiter supports local development only. Production must enforce five generation requests per minute at the edge using a privacy-safe client signal. Do not store raw IP addresses.
+- The in-process limiter permits five generations per ten minutes per HMAC-signed anonymous UUID cookie. It does not use IP addresses, so users behind one gateway do not share a bucket.
+- Clearing or blocking cookies creates a new browser identity. Treat this as a fair-use and cost-control guard; production still needs separate edge abuse protection.
 
 Allowed log metadata is limited to: event name, timestamp, request ID, stable error code, export format, section ID, duration milliseconds, model identifier, schema version, input/output/reasoning token counts, and retry count.
 
@@ -78,8 +80,8 @@ Allowed log metadata is limited to: event name, timestamp, request ID, stable er
 
 1. Run the complete release gate locally.
 2. Deploy the standalone Next.js output to a Node.js 22 platform.
-3. Configure a restricted OpenRouter key, `OPENROUTER_MODEL=xiaomi/mimo-v2.5-pro`, `OPENROUTER_BASE_URL=https://openrouter.ai/api/v1`, `GENERATION_TIMEOUT_MS=120000`, the exact production `APP_ORIGIN`, and a unique `RATE_LIMIT_SALT`.
-4. Configure edge rate limiting at five generation requests per minute per privacy-safe client signal.
+3. Configure a restricted OpenRouter key, `OPENROUTER_MODEL=xiaomi/mimo-v2.5-pro`, `OPENROUTER_BASE_URL=https://openrouter.ai/api/v1`, `GENERATION_TIMEOUT_MS=120000`, the exact production `APP_ORIGIN`, and a strong unique `COOKIE_SECRET`.
+4. Configure production edge abuse protection without treating a shared gateway IP as the sole user identity.
 5. Verify CSP and no-store headers at the public origin.
 6. Run the staging smoke test before promoting traffic.
 

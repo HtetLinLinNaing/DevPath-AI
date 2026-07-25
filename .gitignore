@@ -9,3 +9,4 @@ test-results/
 npm-*.log
 .env*
 !.env.example
+sample/

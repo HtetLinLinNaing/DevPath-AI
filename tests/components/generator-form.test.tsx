@@ -22,16 +22,16 @@ function Harness({ onSubmit = vi.fn(), submitting = false, onCancel = vi.fn() })
 describe("GeneratorForm", () => {
   it("renders the complete labeled profile workflow", () => {
     render(<Harness />);
-    expect(screen.getByLabelText("Job description")).toBeInTheDocument();
-    expect(screen.getByLabelText("Target role")).toBeInTheDocument();
-    expect(screen.getByLabelText("Current role or status")).toBeInTheDocument();
-    expect(screen.getByLabelText("Years of relevant experience")).toBeInTheDocument();
-    expect(screen.getByLabelText("Weekly study time")).toBeInTheDocument();
+    expect(screen.getByLabelText("Job description")).toBeRequired();
+    expect(screen.getByLabelText("Target role")).toBeRequired();
+    expect(screen.getByLabelText("Current role or status")).toBeRequired();
+    expect(screen.getByRole("combobox", { name: "Years of relevant experience" })).toBeRequired();
+    expect(screen.getByLabelText("Weekly study time")).toBeRequired();
     expect(screen.getByLabelText("Target application date")).toBeInTheDocument();
     expect(screen.getByLabelText("Learning budget")).toBeInTheDocument();
     expect(screen.getByLabelText("Education (optional)")).toBeInTheDocument();
     expect(screen.getByLabelText("Additional constraints (optional)")).toBeInTheDocument();
-    expect(screen.getByLabelText(/I consent to sending this information/i)).toBeInTheDocument();
+    expect(screen.queryByText(/I consent to sending this information/i)).not.toBeInTheDocument();
   });
 
   it("adds and removes skill rows but keeps at least one", async () => {
@@ -53,7 +53,7 @@ describe("GeneratorForm", () => {
     expect(screen.getByLabelText("Job description")).toHaveFocus();
   });
 
-  it("rejects duplicate skills and missing consent", async () => {
+  it("rejects duplicate skills", async () => {
     const user = userEvent.setup();
     render(<Harness />);
     fireEvent.change(screen.getByLabelText("Job description"), { target: { value: "Backend engineer role requiring Node.js, Docker, AWS, CI/CD, testing, observability, security, APIs, databases, and communication. ".repeat(3) } });
@@ -64,7 +64,6 @@ describe("GeneratorForm", () => {
     await user.type(screen.getByLabelText("Skill 2 name"), " node.JS ");
     await user.click(screen.getByRole("button", { name: "Generate my roadmap" }));
     expect(screen.getByText("Skill names must be unique")).toBeInTheDocument();
-    expect(screen.getByText("You must consent before generating a roadmap.")).toBeInTheDocument();
   });
 
   it("disables duplicate submission and exposes cancellation", async () => {

@@ -35,7 +35,7 @@ export function createInitialRequest(): RoadmapDraft {
       constraints: "",
     },
     targetRole: "",
-    consentToAIProcessing: false,
+    consentToAIProcessing: true,
   };
 }
 
@@ -60,4 +60,3 @@ export function generatorReducer(state: GeneratorState, action: GeneratorAction)
       return { status: "editing", input: createInitialRequest(), error: null };
   }
 }
-

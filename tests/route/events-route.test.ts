@@ -27,6 +27,12 @@ describe("POST /api/events", () => {
     expect(console.info).toHaveBeenCalledOnce();
   });
 
+  it("accepts a same-origin event when APP_ORIGIN is not configured", async () => {
+    delete process.env.APP_ORIGIN;
+    const response = await POST(eventRequest({ name: "generator_viewed", metadata: {} }));
+    expect(response.status).toBe(204);
+  });
+
   it.each([
     [{ name: "unknown", metadata: {} }, 400],
     [{ name: "generator_viewed", metadata: {}, prompt: "private" }, 400],

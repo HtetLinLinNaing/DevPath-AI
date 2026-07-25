@@ -10,7 +10,8 @@ function errorResponse(message: string, status: number): Response {
 
 export async function POST(request: Request): Promise<Response> {
   const origin = request.headers.get("origin");
-  if (origin && (!process.env.APP_ORIGIN || origin !== process.env.APP_ORIGIN)) {
+  const allowedOrigin = process.env.APP_ORIGIN || new URL(request.url).origin;
+  if (origin && origin !== allowedOrigin) {
     return errorResponse("The request origin is not allowed.", 400);
   }
 
