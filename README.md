@@ -2,6 +2,8 @@
 
 DevPath AI converts a target job description and a candidate's current evidence into a validated job-readiness roadmap. It returns requirement coverage, prioritized gaps, four to six learning phases, exactly two portfolio projects, an application timeline, and optional certification guidance.
 
+[MIT License](LICENSE)
+
 ## Prerequisites
 
 - Node.js 22 LTS
