@@ -1,9 +1,9 @@
 ---
-name: roadmap-quality
+name: career-roadmap
 description: Use when reviewing or testing DevPath AI roadmap output, generator flows, or changes that affect requirement coverage and learning plans.
 ---
 
-# DevPath AI Roadmap Quality
+# DevPath AI Career Roadmap Quality
 
 Use this skill to verify that a roadmap is useful, structurally valid, and safe
 to operate. The app accepts a target job description and candidate evidence,
